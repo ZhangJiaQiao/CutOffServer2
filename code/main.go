@@ -11,9 +11,9 @@ import (
 	"net/http"
 	// "strconv"
 	// "time"
-	"github.com/mux"
-	"github.com/negroni"
-	"github.com/render"
+	"github.com/gorilla/mux"
+	"github.com/unrolled/render"
+	"github.com/urfave/negroni"
 )
 
 // User Entity
