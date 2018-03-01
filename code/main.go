@@ -36,8 +36,8 @@ var db *sql.DB
 func main() {
 	admin.Username = "admin"
 	admin.Password = "admin"
-	db, _ = sql.Open("mysql", "root:1254860908@tcp(127.0.0.1:3306)/cut_off_user?charset=utf8")
-	port := ":8080"
+	db, _ = sql.Open("mysql", "root:Zjq19970920@tcp(127.0.0.1:3306)/cut_off_user?charset=utf8")
+	port := ":2222"
 	server := NewServer()
 	server.Run(port)
 	fmt.Println("Server start successfully!")
