@@ -11,15 +11,16 @@ import (
 	"net/http"
 	// "strconv"
 	// "time"
-	"github.com/gorilla/mux"
-	"github.com/unrolled/render"
-	"github.com/urfave/negroni"
+	"github.com/mux"
+	"github.com/negroni"
+	"github.com/render"
 )
 
 // User Entity
 type User struct {
 	Username string
 	Password string
+	Score    int
 	//Apikey      string `xorm:"'api_key' text" json:"api_key"`
 }
 
@@ -68,6 +69,15 @@ func initRoutes(mx *mux.Router, formatter *render.Render) {
 	url = Version + "users"
 	mx.HandleFunc(url, usersPostHandler(formatter)).Methods("POST")
 	mx.HandleFunc(url, usersGetHandler(formatter)).Methods("GET")
+	//score
+	url = Version + "score"
+	mx.HandleFunc(url, scoreGetHandler(formatter)).Methods("GET")
+	//rank
+	url = Version + "rank"
+	mx.HandleFunc(url, rankGetHandler(formatter)).Methods("GET")
+	//addScore
+	url = Version + "addScore"
+	mx.HandleFunc(url, addScoreGetHandler(formatter)).Methods("GET")
 }
 
 //handler
@@ -96,9 +106,36 @@ func authHandler(formatter *render.Render) http.HandlerFunc {
 	}
 }
 
+// GET  /v1/addScore
+func addScoreGetHandler(formatter *render.Render) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		err := req.ParseForm()
+		if err != nil {
+			panic(err)
+		}
+		var user User
+		user.Username = req.FormValue("username")
+		user.Score = 0
+		err2 := db.QueryRow("select score from data where username=?", user.Username).Scan(&user.Score)
+		if err2 == sql.ErrNoRows {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		user.Score = int(user.Score) + 1
+		stmt, err3 := db.Prepare("update data set score=? where username=?")
+		if err3 != nil {
+			panic(err3)
+		}
+		_, err4 := stmt.Exec(user.Score, user.Username)
+		if err4 != nil {
+			panic(err4)
+		}
+		formatter.JSON(w, http.StatusCreated, user)
+	}
+}
+
 // POST /v1/users
 func usersPostHandler(formatter *render.Render) http.HandlerFunc {
-
 	return func(w http.ResponseWriter, req *http.Request) {
 		err := req.ParseForm()
 		if err != nil {
@@ -132,59 +169,47 @@ func usersPostHandler(formatter *render.Render) http.HandlerFunc {
 
 }
 
-// GET /v1/users{?api_key,course_id,type}
+// GET /v1/users{?username}
 func usersGetHandler(formatter *render.Render) http.HandlerFunc {
-
 	return func(w http.ResponseWriter, req *http.Request) {
 		err := req.ParseForm()
 		if err != nil {
 			panic(err)
 		}
 		fmt.Println("GET successfully")
-		// if !validateUser(req.FormValue("api_key")) {
-		// 	formatter.JSON(w, http.StatusForbidden, entities.Error{
-		// 		Error: "Permission denied"})
-		// 	return
-		// }
-
-		// userList := userDAO.FindAll()
-		// users := make([]entities.User, 0)
-		// if req.FormValue("course_id") != "" {
-		// 	courseID, _ := strconv.Atoi(req.FormValue("course_id"))
-		// 	if req.FormValue("type") != "" {
-		// 		for _, user := range userList {
-		// 			if user.Type != req.FormValue("type") {
-		// 				continue
-		// 			}
-		// 			for _, id := range user.Courses {
-		// 				if id == courseID {
-		// 					users = append(users, user)
-		// 					break
-		// 				}
-		// 			}
-		// 		}
-		// 	} else {
-		// 		for _, user := range userList {
-		// 			for _, id := range user.Courses {
-		// 				if id == courseID {
-		// 					users = append(users, user)
-		// 					break
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// } else {
-		// 	if req.FormValue("type") != "" {
-		// 		for _, user := range userList {
-		// 			if user.Type == req.FormValue("type") {
-		// 				users = append(users, user)
-		// 			}
-		// 		}
-		// 	} else {
-		// 		users = userList
-		// 	}
-		// }
-		// formatter.JSON(w, http.StatusOK, users)
 	}
+}
 
+// GET /v1/score
+func scoreGetHandler(formatter *render.Render) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		fmt.Println("GET score successfully")
+	}
+}
+
+// GET /v1/rank
+func rankGetHandler(formatter *render.Render) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		err := req.ParseForm()
+		if err != nil {
+			panic(err)
+		}
+		rows, err2 := db.Query("select username, score from data order by score")
+		if err2 != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		var count int
+		count = 10
+		userList := make([]User, count)
+		var i int
+		i = 0
+		for rows.Next() {
+			var user User
+			rows.Scan(&user.Username, &user.Score)
+			userList[i] = user
+			i++
+		}
+		formatter.JSON(w, http.StatusOK, userList)
+	}
 }
