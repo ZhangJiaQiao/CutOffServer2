@@ -210,6 +210,8 @@ func rankGetHandler(formatter *render.Render) http.HandlerFunc {
 			userList[i] = user
 			i++
 		}
-		formatter.JSON(w, http.StatusOK, userList)
+		data := make(map[string][]User)
+		data['inforlist']=userList
+		formatter.JSON(w, http.StatusOK, data)
 	}
 }
