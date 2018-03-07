@@ -194,7 +194,7 @@ func rankGetHandler(formatter *render.Render) http.HandlerFunc {
 		if err != nil {
 			panic(err)
 		}
-		rows, err2 := db.Query("select username, score from data order by score")
+		rows, err2 := db.Query("select username, score from data order by score desc")
 		if err2 != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
