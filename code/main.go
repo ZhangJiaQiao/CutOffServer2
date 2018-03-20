@@ -205,6 +205,8 @@ func rankGetHandler(formatter *render.Render) http.HandlerFunc {
 		var i int
 		i = 0
 		for rows.Next() {
+			if (i >= 10)
+				break;
 			var user User
 			rows.Scan(&user.Username, &user.Score)
 			userList[i] = user
