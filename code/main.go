@@ -192,7 +192,7 @@ func rankGetHandler(formatter *render.Render) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		err := req.ParseForm()
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
 		}
 		rows, err2 := db.Query("select username, score from data order by score desc")
 		if err2 != nil {
